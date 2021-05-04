@@ -17,7 +17,7 @@ const connections = [null, null]
 
 io.on('connection', socket => {
     console.log('new WS Connection')
-
+    
     //finc a player spot
     let playerIndex = -1
     for (let i in connections) {
@@ -66,7 +66,7 @@ io.on('connection', socket => {
 
     // on Fire receinved
     socket.on('fire', id => {
-        console.log(`shot Fired  h from ${playerIndex}`, id)
+        console.log(`shot Fired from ${playerIndex}`, id)
 
         // Emit the move to the other player
         socket.broadcast.emit('fire', id)
@@ -76,7 +76,7 @@ io.on('connection', socket => {
     socket.on('fire-reply', square => {
         console.log(square)
 
-        //Forward the reply to the otther player
+        //Forward the reply to the otther player uhu
         socket.broadcast.emit('fire-reply', square)
     })
 })
