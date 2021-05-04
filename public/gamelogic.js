@@ -90,8 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
         //setup event listener for fireing
         user2Squares.forEach(square => {
             square.addEventListener('click', () => {
+                if(currentPlayer === 'user' && ready && enemyReady) {
                 shotFired = square.dataset.id
                 socket.emit('fire', shotFired)
+                }
             })
         })
 
@@ -186,18 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
     createBoard(user2Grid, user2Squares)
 
     function generate(ship) {
-        console.log(Object.keys(ship).length)
-        console.log(ship.directions[0].length)
-        let squareDirection = Math.floor(Math.square() * Object.keys(ship).length)
-        console.log(squareDirection)
+        let squareDirection = Math.floor(Math.random() * Object.keys(ship).length) 
         let current = ship.directions[squareDirection]
-        console.log(ship.directions[0].length)
         let squareStart = 0
         if (squareDirection === 0) {
-            squareStart = Math.floor(Math.square() * (10 - ship.directions[squareDirection].length)) + Math.floor(Math.square() * 10) * 10
+            squareStart = Math.floor(Math.random() * (10 - ship.directions[squareDirection].length)) + Math.floor(Math.random() * 10) * 10
         }
         if (squareDirection === 1) {
-            squareStart = Math.floor(Math.square() * 10) + Math.floor(Math.square() * (10 - ship.directions[squareDirection].length) * 10)
+            squareStart = Math.floor(Math.random() * 10) + Math.floor(Math.random() * (10 - ship.directions[squareDirection].length) * 10)
         }
         console.log(squareStart)
 
@@ -222,7 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
     rotateButton.addEventListener('click', rotate)
 
     //move ship
-    console.log(ships)
     ships.forEach(ship => ship.addEventListener('dragstart', dragStart))
     user1Squares.forEach(square => square.addEventListener('dragstart', dragStart))
     user1Squares.forEach(square => square.addEventListener('dragover', dragOver))
@@ -237,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ships.forEach(ship => ship.addEventListener('mousedown', (e) => {
         selectedShipNameWithIndex = e.target.id
-        console.log(selectedShipNameWithIndex)
+        //console.log(selectedShipNameWithIndex)
     }))
 
     function dragStart(e) {
@@ -256,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function dragLeave() {
-        console.log('drag leave')
+        //console.log('drag leave')
     }
 
     function dragDrop() {
@@ -267,19 +264,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let lastShipIndex = parseInt(shipNameWithLastId.substr(-1))
         let shipLastId = lastShipIndex + parseInt(this.dataset.id)
 
+        const notAllowedHorizontal = [0,10,20,30,40,50,60,70,80,90,1,11,21,31,41,51,61,71,81,91,2,22,32,42,52,62,72,82,92,3,13,23,33,43,53,63,73,83,93]
+        const notAllowedVertical = [99,98,97,96,95,94,93,92,91,90,89,88,87,86,85,84,83,82,81,80,79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,61,60]
+    
+        let newNotAllowedHorizontal = notAllowedHorizontal.splice(0, 10 * lastShipIndex)
+        let newNotAllowedVertical = notAllowedVertical.splice(0, 10 * lastShipIndex)
+
         selectedShipIndex = parseInt(selectedShipNameWithIndex.substr(-1))
 
         shipLastId = shipLastId - selectedShipIndex
 
-        if (isHorizontal) {
+        if (isHorizontal && !newNotAllowedHorizontal.includes(shipLastId)) {
             for (let i = 0; i < draggedShipLength; i++) {
                 user1Squares[parseInt(this.dataset.id) + i].classList.add('taken', shipClass)
             }
-        } else if (!isHorizontal) {
+        } else if (!isHorizontal && !newNotAllowedVertical.includes(shipLastId)) {
             for (let i = 0; i < draggedShipLength; i++) {
                 user1Squares[parseInt(this.dataset.id) - selectedShipIndex + size * i].classList.add('taken', shipClass)
             }
-        }
+        } else return
 
         setupGrid.removeChild(draggedShip)
         if(!setupGrid.querySelector('.ship')) allShipPlaced = true
@@ -321,6 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentPlayer === 'user') {
             gameInfo.innerHTML = 'Your Go'
             user2Squares.forEach(square => square.addEventListener('click', function (e) {
+                shotFired = square.dataset.id
                 revealSquare(square.classList)
             }))
         }
@@ -366,10 +370,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let carrierCount2 = 0
 
     function user2Go(square) {
-        if (gameMode === 'singleplayer') square = Math.floor(Math.square() * user1Squares.length)
+        if (gameMode === 'singlePlayer') square = Math.floor(Math.random() * user1Squares.length)
 
         if (!user1Squares[square].classList.contains('boom')) {
-            user1Squares[square].classList.add('boom')
+            if (user1Squares[square].classList.length === 0) { 
+                user1Squares[square].classList.add('miss')
+            } else {
+                user1Squares[square].classList.add('boom')
+            }
             if (user1Squares[square].classList.contains('destroyer')) destroyerCount2++
             if (user1Squares[square].classList.contains('submarine')) submarineCount2++
             if (user1Squares[square].classList.contains('cruiser')) cruiserCount2++
