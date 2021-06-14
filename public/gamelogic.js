@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allShipPlaced = true
     let shotFired = -1
     const size = 10
-    
+
 
     //Create Game Boards
     createBoard(user1Grid, userSquares)
@@ -33,10 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     //Select Game Mode
     if (gameMode === "singlePlayer") {
 
-    } else if (gameMode === 'multiPlayer'){
+    } else if (gameMode === 'multiPlayer') {
         startMultiPlayer();
     }
-  
+
 
 
 
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     ]
 
-   
+
 
     //Multi player
     function startMultiPlayer() {
@@ -124,8 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
         //Ready button Click
         startButton.addEventListener('click', () => {
             if (allShipPlaced) {
-               socket.emit('player-ready', createUserBoard())
-               gameInfo.innerHTML = 'Waiting for an opponent'
+                socket.emit('player-ready', createUserBoard())
+                gameInfo.innerHTML = 'Waiting for an opponent'
             } else {
                 gameInfo.innerHTML = 'Please place all your ships!'
             }
@@ -146,17 +146,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         //Tells which player disconnected or connected
         function playerConnectedOrDisconnected(num) {
-            let player = `.p${parseInt(num) + 1}`
-            document.querySelector(`${player} .connected span`).classList.toggle('green')
-            if (parseInt(num) === playerNum) document.querySelector(player).style.
-                fontWeight = 'bold'
+            let player = parseInt(num)
+            let connectedPlayer = '.p2'
+            if (player === playerNum) connectedPlayer = '.p1'
+            document.querySelector(`${connectedPlayer} .connected span`).classList.toggle('green')
+
 
         }
 
         //Tells which player is Ready or Not
         function playerReady(num) {
-            let player = `.p${parseInt(num) + 1}`
-            document.querySelector(`${player} .ready span`).classList.toggle('green')
+            let player = parseInt(num)
+            let readyPlayer = '.p2'
+            if (player === playerNum) readyPlayer = '.p1'
+            document.querySelector(`${readyPlayer} .ready span`).classList.toggle('green')
         }
 
         // On fire received
@@ -174,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         socket.on('whose-go', currentPlayer => {
-            if(playerNum+1 == currentPlayer){
+            if (playerNum + 1 == currentPlayer) {
                 whoseGo.innerHTML = 'Your Go'
             } else {
                 whoseGo.innerHTML = "Opponent's turn"
@@ -225,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ships.forEach(ship => ship.addEventListener('mousedown', (e) => {
         selectedShipNameWithIndex = e.target.id
-        //console.log(selectedShipNameWithIndex)
+        console.log(selectedShipNameWithIndex)
     }))
 
     function dragStart(e) {
@@ -248,12 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function dragDrop() {
-        console.log(draggedShip)
+        //console.log(draggedShip)
         let shipNameWithLastId = draggedShip.lastElementChild.id
         let shipClass = shipNameWithLastId.slice(0, -2)
-        console.log(shipClass)
+        let firstId
+        //console.log(shipClass)
         let lastShipIndex = parseInt(shipNameWithLastId.substr(-1))
-        let shipLastId = lastShipIndex + parseInt(this.dataset.id)
+        shipLastId = lastShipIndex + parseInt(this.dataset.id)
+        if (!isHorizontal) shipLastId = lastShipIndex * size + parseInt(this.dataset.id)
 
         const notAllowedHorizontal = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 1, 11, 21, 31, 41, 51, 61, 71, 81, 91, 2, 22, 32, 42, 52, 62, 72, 82, 92, 3, 13, 23, 33, 43, 53, 63, 73, 83, 93]
         const notAllowedVertical = [99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60]
@@ -261,23 +266,40 @@ document.addEventListener('DOMContentLoaded', () => {
         let newNotAllowedHorizontal = notAllowedHorizontal.splice(0, 10 * lastShipIndex)
         let newNotAllowedVertical = notAllowedVertical.splice(0, 10 * lastShipIndex)
 
+        console.log(notAllowedVertical)
+        console.log(newNotAllowedVertical)
+
         selectedShipIndex = parseInt(selectedShipNameWithIndex.substr(-1))
 
-        shipLastId = shipLastId - selectedShipIndex
+        if (isHorizontal) {
+            shipLastId = shipLastId - selectedShipIndex
+            
+        }
+        if (!isHorizontal) {
+            shipLastId = shipLastId - selectedShipIndex * size
+            firstId = shipLastId - (draggedShipLength-1) * 10
+        }
 
         if (isHorizontal && !newNotAllowedHorizontal.includes(shipLastId)) {
             for (let i = 0; i < draggedShipLength; i++) {
-                let positionClass = 'middle'
-                if(i === 0) positionClass = 'start'
-                if(i === draggedShipLength - 1) positionClass = 'end'
-                userSquares[parseInt(this.dataset.id) + i].classList.add('taken', 'horizontal', positionClass, shipClass)
+               if (userSquares[parseInt(this.dataset.id) - selectedShipIndex + i].classList.contains('taken')) return
             }
-        } else if (!isHorizontal && !newNotAllowedVertical.includes(shipLastId)) {
             for (let i = 0; i < draggedShipLength; i++) {
                 let positionClass = 'middle'
-                if(i === 0) positionClass = 'start'
-                if(i === draggedShipLength - 1) positionClass = 'end'
-                userSquares[parseInt(this.dataset.id) - selectedShipIndex + size * i].classList.add('taken', 'vertical', positionClass, shipClass)
+                if (i === 0) positionClass = 'start'
+                if (i === draggedShipLength - 1) positionClass = 'end'
+                userSquares[parseInt(this.dataset.id) - selectedShipIndex + i].classList.add('taken', 'horizontal', positionClass, shipClass)
+            }
+        } else if (!isHorizontal && !newNotAllowedVertical.includes(firstId)) {
+            for (let i = 0; i < draggedShipLength; i++) {
+                if (userSquares[parseInt(this.dataset.id) - selectedShipIndex + i].classList.contains('taken')) return
+            }
+            
+            for (let i = 0; i < draggedShipLength; i++) {
+                let positionClass = 'middle'
+                if (i === 0) positionClass = 'start'
+                if (i === draggedShipLength - 1) positionClass = 'end'
+                userSquares[parseInt(this.dataset.id) - selectedShipIndex * size + size * i].classList.add('taken', 'vertical', positionClass, shipClass)
             }
         } else return
 
@@ -314,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let userBoard = new Array(100).fill(0);
         let i = 0
         userSquares.forEach(square => {
-            if(square.classList.contains('taken')){
+            if (square.classList.contains('taken')) {
                 userBoard[i] = 1
             }
             i++
