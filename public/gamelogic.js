@@ -25,13 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let shotFired = -1
     const size = 10
 
-    var miss = new Audio('sounds/miss_shot.wav');
-    var hit = new Audio('sounds/hit_shot.wav');
-
-
     //Create Game Boards
     createBoard(user1Grid, userSquares)
     createBoard(user2Grid, EnemySquares)
+
+    miss = new Audio('sounds/miss_shot.wav')
+    hit = new Audio('sounds/hit_shot.wav')
 
     //Select Game Mode
     if (gameMode === "singlePlayer") {
