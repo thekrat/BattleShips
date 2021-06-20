@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let shotFired = -1
     const size = 10
 
+    var miss = new Audio('sounds/miss_shot.wav');
+    var hit = new Audio('sounds/hit_shot.wav');
+
 
     //Create Game Boards
     createBoard(user1Grid, userSquares)
@@ -164,10 +167,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // On fire received
         socket.on('fire-reply', (id, num, shot) => {
+            if(shot === "miss") {
+                miss.play()
+            } else {
+                hit.play()
+            }
             if (playerNum === parseInt(num) - 1) {
                 //změn plochu nepřítele
                 let enemySquare = user2Grid.querySelector(`div[data-id='${id}']`)
                 enemySquare.classList.add(shot)
+                
+                
+
             }
             else {
                 let userSquare = user1Grid.querySelector(`div[data-id='${id}']`)
@@ -292,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (!isHorizontal && !newNotAllowedVertical.includes(firstId)) {
             for (let i = 0; i < draggedShipLength; i++) {
-                if (userSquares[parseInt(this.dataset.id) - selectedShipIndex + i].classList.contains('taken')) return
+                if (userSquares[parseInt(this.dataset.id) - selectedShipIndex * size + size * i].classList.contains('taken')) return
             }
             
             for (let i = 0; i < draggedShipLength; i++) {
