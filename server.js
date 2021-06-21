@@ -126,7 +126,7 @@ io.on('connection', socket => {
         if (playerNum === currentPlayer && playerNum === 1) {
             //
             if (user2Squares[id] != '') {    
-                io.emit("game-info", "Trefa")
+                io.emit("game-info", "Hit")
                 countShips(currentPlayer, id)  
                 checkForWinsUser2();     
                 io.emit('fire-reply', id, playerNum, 'boom')
@@ -137,7 +137,7 @@ io.on('connection', socket => {
             }
             else {
                io.emit('fire-reply', id, playerNum, 'miss')
-               io.emit("game-info", "Minul")
+               io.emit("game-info", "Miss")
                 currentPlayer = 2
             }
             console.log("hráč jedna vystřelil")

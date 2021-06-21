@@ -229,6 +229,12 @@ document.addEventListener('DOMContentLoaded', () => {
             else {
                 gameInfo.innerHTML = 'You lost'
             }
+            muteButton.disabled = true
+            EnemySquares.forEach(square => {
+                square.removeEventListener('click', () => {               
+                })
+            })
+            
         })
 
         socket.on('game-info', message => {
