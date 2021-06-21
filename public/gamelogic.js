@@ -25,12 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let shotFired = -1
     const size = 10
 
+    let isMuted = true
+
+
+
     //Create Game Boards
     createBoard(user1Grid, userSquares)
     createBoard(user2Grid, EnemySquares)
 
-    miss = new Audio('sounds/miss_shot.wav')
-    hit = new Audio('sounds/hit_shot.wav')
 
     //Select Game Mode
     if (gameMode === "singlePlayer") {
@@ -81,6 +83,17 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     ]
 
+    //Mute Button
+    muteButton.addEventListener('click', () => {
+        if (muteButton.innerHTML == "mute") {
+            muteButton.innerHTML = "unmute"
+            isMuted = true
+        } else {
+            muteButton.innerHTML = "mute"
+            isMuted = false
+        }
+    })
+
 
 
     //Multi player
@@ -128,6 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (allShipPlaced) {
                 socket.emit('player-ready', createUserBoard())
                 gameInfo.innerHTML = 'Waiting for an opponent'
+                startButton.disabled = true;
+                rotateButton.disabled = true;
             } else {
                 gameInfo.innerHTML = 'Please place all your ships!'
             }
@@ -140,7 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
             EnemySquares.forEach(square => {
                 square.addEventListener('click', () => {
                     shotFired = square.dataset.id
-                    socket.emit('fire', shotFired)
+                    if (!EnemySquares[shotFired].classList.contains('miss', 'boom')) {
+                        socket.emit('fire', shotFired)
+                    }
                 })
             })
 
@@ -166,17 +183,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // On fire received
         socket.on('fire-reply', (id, num, shot) => {
-            if(shot === "miss") {
+            if (shot === "miss" && isMuted == false) {
+                miss = new Audio('sounds/miss_shot.wav')
                 miss.play()
-            } else {
+            } else if (isMuted == false) {
+                hit = new Audio('sounds/hit_shot.wav')
                 hit.play()
             }
             if (playerNum === parseInt(num) - 1) {
                 //změn plochu nepřítele
                 let enemySquare = user2Grid.querySelector(`div[data-id='${id}']`)
                 enemySquare.classList.add(shot)
-                
-                
+
+
 
             }
             else {
@@ -194,6 +213,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
 
+        socket.on('destroyed-ship', currentP => {
+            if (currentP-1 === playerNum) {
+                gameInfo.innerHTML = 'You destroyed Enemy Ship'
+            }
+            else {
+                gameInfo.innerHTML = 'Your ship was destroyed'
+            }
+        })
+
+        socket.on('game-end', currentP => {
+            if (currentP-1 === playerNum) {
+                gameInfo.innerHTML = 'You won'
+            }
+            else {
+                gameInfo.innerHTML = 'You lost'
+            }
+        })
+
+        socket.on('game-info', message => {
+            gameInfo.innerHTML = message
+        })
     }
 
 
@@ -283,16 +323,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isHorizontal) {
             shipLastId = shipLastId - selectedShipIndex
-            
+
         }
         if (!isHorizontal) {
             shipLastId = shipLastId - selectedShipIndex * size
-            firstId = shipLastId - (draggedShipLength-1) * 10
+            firstId = shipLastId - (draggedShipLength - 1) * 10
         }
 
         if (isHorizontal && !newNotAllowedHorizontal.includes(shipLastId)) {
             for (let i = 0; i < draggedShipLength; i++) {
-               if (userSquares[parseInt(this.dataset.id) - selectedShipIndex + i].classList.contains('taken')) return
+                if (userSquares[parseInt(this.dataset.id) - selectedShipIndex + i].classList.contains('taken')) return
             }
             for (let i = 0; i < draggedShipLength; i++) {
                 let positionClass = 'middle'
@@ -304,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < draggedShipLength; i++) {
                 if (userSquares[parseInt(this.dataset.id) - selectedShipIndex * size + size * i].classList.contains('taken')) return
             }
-            
+
             for (let i = 0; i < draggedShipLength; i++) {
                 let positionClass = 'middle'
                 if (i === 0) positionClass = 'start'
@@ -347,12 +387,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let i = 0
         userSquares.forEach(square => {
             if (square.classList.contains('taken')) {
-                userBoard[i] = 1
+                if (square.classList.contains('destroyer')) {
+                    userBoard[i] = 'destroyer'
+                } else if (square.classList.contains('cruiser')) {
+                    userBoard[i] = 'cruiser'
+                } else if (square.classList.contains('battleship')) {
+                    userBoard[i] = 'battleship'
+                } else if (square.classList.contains('submarine')) {
+                    userBoard[i] = 'submarine'
+                } else if (square.classList.contains('carrier')) {
+                    userBoard[i] = 'carrier'
+                } else {
+                    userBoard[i] = ''
+                }
             }
             i++
         });
         return userBoard
     }
+
 
 
 

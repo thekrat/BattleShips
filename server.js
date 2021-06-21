@@ -17,6 +17,22 @@ server.listen(PORT, () => console.log(`Running on port ${PORT}`))
 
 
 //game logic variables
+let user1DestroyerCount = 0
+let user1SubmarineCount = 0
+let user1CruiserCount = 0
+let user1BattleshipCount = 0
+let user1CarrierCount = 0
+
+
+let user2DestroyerCount = 0
+let user2SubmarineCount = 0
+let user2CruiserCount = 0
+let user2BattleshipCount = 0
+let user2CarrierCount = 0
+
+
+
+
 let user1Squares
 let user2Squares
 let isGameOver = false
@@ -35,7 +51,7 @@ io.on('connection', socket => {
     let playerNum = 0
     let enemyReady = false
 
-    //finc a player spot
+    //find a player spot
     var playerIndex = -1
     for (let i in connections) {
         if (connections[i] === null) {
@@ -104,31 +120,43 @@ io.on('connection', socket => {
     // on Fire receinved
     socket.on('fire', id => {
         console.log(`shot Fired from ${playerIndex}`, id)
+        //check which player shot and if it is their turn reveal the square
         console.log(currentPlayer)
-        //přepošli střelu hráči
+        console.log(playerNum)
         if (playerNum === currentPlayer && playerNum === 1) {
-            //hráč jedna výstřel
-            if (user2Squares[id] === 1) {
-                socket.broadcast.emit('fire-reply', id, playerNum, 'boom')
-                socket.emit('fire-reply', id, playerNum, 'boom')
+            //
+            if (user2Squares[id] != '') {    
+                io.emit("game-info", "Trefa")
+                countShips(currentPlayer, id)  
+                checkForWinsUser2();     
+                io.emit('fire-reply', id, playerNum, 'boom')
+                currentPlayer = 1
+                console.log(currentPlayer)
+
+
             }
             else {
-                socket.broadcast.emit('fire-reply', id, playerNum, 'miss')
-                socket.emit('fire-reply', id, playerNum, 'miss')
+               io.emit('fire-reply', id, playerNum, 'miss')
+               io.emit("game-info", "Minul")
+                currentPlayer = 2
             }
             console.log("hráč jedna vystřelil")
-            currentPlayer = 2
+           
         } else if (playerNum === currentPlayer && playerNum === 2) {
             //hráč dva výstřel
-            if (user1Squares[id] === 1) {
-                socket.broadcast.emit('fire-reply', id, playerNum, 'boom')
-                socket.emit('fire-reply', id, playerNum, 'boom')
+            if (user1Squares[id] != '') {
+                io.emit("game-info", "Hit")
+                io.emit('fire-reply', id, playerNum, 'boom')
+                countShips(currentPlayer, id)
+                checkForWinsUser1();
+                currentPlayer = 2
             } else {
-                socket.broadcast.emit('fire-reply', id, playerNum, 'miss')
-                socket.emit('fire-reply', id, playerNum, 'miss')
+                io.emit('fire-reply', id, playerNum, 'miss')
+                currentPlayer = 1  
+                io.emit("game-info", "Miss")
             }
             console.log("hráč dva vystřelil")
-            currentPlayer = 1           
+                    
 
         }
         socket.emit('whose-go', currentPlayer)
@@ -138,5 +166,89 @@ io.on('connection', socket => {
     /*
     GAME LOGIC METHODS
     */
+
+    function countShips (currentPlayer, id) {
+        if(currentPlayer === 1){
+            if(user2Squares[id] === 'destroyer'){
+                user2DestroyerCount += 1
+            } else if(user2Squares[id] === 'cruiser'){
+               user2CruiserCount += 1
+            } else if(user2Squares[id] === 'battleship'){
+                user2BattleshipCount += 1
+            }else if(user2Squares[id] === 'submarine'){
+                user2SubmarineCount += 1
+            }else if(user2Squares[id] === 'carrier'){
+                user2CarrierCount += 1
+            } 
+           
+        }
+        else {
+            if(user1Squares[id] === 'destroyer'){
+                user1DestroyerCount += 1
+            } else if(user1Squares[id] === 'cruiser'){
+                user1CruiserCount += 1
+            } else if(user1Squares[id] === 'battleship'){
+                user1BattleshipCount += 1
+            }else if(user1Squares[id] === 'submarine'){
+                user1SubmarineCount += 1
+            }else if(user1Squares[id] === 'carrier'){
+                user1CarrierCount += 1
+            }       
+        }      
+    }
+
+    function checkForWinsUser1(){
+        if (user1DestroyerCount === 2) {
+            user1DestroyerCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user1SubmarineCount === 3) {
+            user1SubmarineCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user1CruiserCount === 3) {
+            user1CruiserCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user1BattleshipCount === 4) {
+            user1BattleshipCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user1CarrierCount === 5) {
+            user1CarrierCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+        }
+        if (user1BattleshipCount + user1CarrierCount + user1CruiserCount + user1DestroyerCount + user1SubmarineCount == 50) {
+            io.emit("game-end", currentPlayer)
+        }
+    }
+
+    function checkForWinsUser2(){
+        if (user2DestroyerCount === 2) {
+            user2DestroyerCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user2SubmarineCount === 3) {
+            user2SubmarineCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user2CruiserCount === 3) {
+            user2CruiserCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user2BattleshipCount === 4) {
+            user2BattleshipCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+          }
+          if (user2CarrierCount === 5) {
+            user2CarrierCount = 10
+            io.emit("destroyed-ship", currentPlayer)
+        }
+        if (user2BattleshipCount + user2CarrierCount + user2CruiserCount + user2DestroyerCount + user2SubmarineCount == 50) {
+            io.emit("game-end", currentPlayer)
+        }
+    }
+
+    
 
 })
