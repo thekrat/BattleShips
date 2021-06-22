@@ -104,6 +104,7 @@ io.on('connection', socket => {
         if (connections[0] === true && connections[1] === true) {
             io.emit('start-multiplayer')
             io.emit('whose-go', 1)
+          
         }
     })
 
@@ -248,7 +249,6 @@ io.on('connection', socket => {
             io.emit("game-end", currentPlayer)
         }
     }
-
     
 
 })
